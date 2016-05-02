@@ -2,8 +2,22 @@
 
 This is a Python execercice.
 
-To run this, just do:
+## Installation
 
-    git clone https://github.com/xicopetry/devgpython.git
-    cd devgpython
-    python main.py
+1. Clone this repository and create a virtual env
+    
+        git clone https://github.com/xicopetry/devgpython.git
+        cd devgpython
+        virtualenv dev
+
+2. Install 'mock'
+    
+        pip install mock
+
+3. Ready to use or test:
+
+        python main.py
+
+    or
+
+        python main.py
