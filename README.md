@@ -12,6 +12,7 @@ This is a Python execercice.
 
 2. Install 'mock'
     
+        source env/bin/activate
         pip install mock
 
 3. Ready to use or test:
