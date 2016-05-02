@@ -1,116 +1,94 @@
+#!/usr/bin/env python
+
+from collections import namedtuple
+import unittest
 import main
-
-# Test file
-
-# File with all the tests of the system
+from mock import Mock
 
 
+class TestMain(unittest.TestCase):
 
-class MainTest():
-  """
-  Main class to manage the tests
-  """
+    def test_main(self):
+        test_list = [
+            '1',
+            '1 2 10 I',
+            '3 1 11 C',
+            '1 2 19 R',
+            '1 2 21 C',
+            '1 1 25 C',
+            '4 1 25 I',
+            '',
+        ]
+        # Mock the effect of raw_input
+        main.raw_input = Mock(side_effect=test_list)
+        output = main.main()
+        expected_result = [
+            '1 2 66',
+            '3 1 11',
+            '4 0 0'
+        ]
+        self.assertEquals(output, expected_result)
 
-  def execute(self):
-    """
-    Method that execute the tests
-    """
-    self.test_get_result_exercise_example()
-    self.test_get_result_empty_list()
-    self.test_get_result_all_correct()
-    self.test_get_result_not_allowed_problem()
-    self.test_get_result_not_allowed_contestant()
+    def test_filter_inputs(self):
+        """
+        Test the function filter inputs.
+        It should receive a list of the user inputs and return an other list.
+        The list that is returned containing only valid inputs, in namedtuples,
+        and sorted by the contestant name and the order it was submited.
+        The order is important, because of the penalty time, that is computed
+        as the the number of minutes it took until the first correct submission
+        for a problem was received, plus 20 minutes for each incorrect
+        submission prior to the correct solution.
+        """
+        test_list = [
+            '1 1 10 I',  # index 0
+            '1 1 21 C',  # index 1
+            '4 2 10 C',  # index 2
+            '2 2 10 C',  # index 3
+            '1 2 10 C',  # index 4
+            '3 1 11 C',  # index 5
+        ]
+        result_received = main.filter_inputs(test_list)
+        Input = namedtuple(
+                'Input', ['contestant', 'problem', 'time', 'letter', 'index']
+        )
+        expected_result = [
+            Input(contestant=1, problem=1, time=10, letter='I', index=0),
+            Input(contestant=1, problem=1, time=21, letter='C', index=1),
+            Input(contestant=1, problem=2, time=10, letter='C', index=4),
+            Input(contestant=2, problem=2, time=10, letter='C', index=3),
+            Input(contestant=3, problem=1, time=11, letter='C', index=5),
+            Input(contestant=4, problem=2, time=10, letter='C', index=2)
+        ]
+        self.assertEquals(result_received, expected_result)
 
-  def test_get_result_exercise_example(self):
-    """
-    Test that use the same input as the exercise example
-    """
-    test_list = [
-      '1 2 10 I',
-      '3 1 11 C',
-      '1 2 19 R',
-      '1 2 21 C',
-      '1 1 25 C',
-    ]
-    result = main.get_result(test_list)
-    expected_result = {
-      '1': {'problems_qty': 2, 'time': 66},
-      '3': {'problems_qty': 1, 'time': 11}
-    }
-    if result == expected_result:
-      print "test_get_result_exercise_example - ok"  
-    else:
-      print "test_get_result_exercise_example - error"
+    def test_incorrect_after_correct(self):
+        """
+        Test if will discart all the incorrect inputs received for a problem
+        after receive a correct one
+        """
+        test_list = [
+            '1',
+            '1 2 10 I',
+            '3 1 11 C',
+            '1 2 19 R',
+            '1 2 21 C',
+            '1 1 25 C',
+            '1 2 10 I',  # This incorret will not be considered
+            '4 1 25 I',
+            '3 1 10 I',  # This incorret will not be considered
+            '',
+        ]
+        # Mock the effect of raw_input
+        main.raw_input = Mock(side_effect=test_list)
+        output = main.main()
+        expected_result = [
+            '1 2 66',
+            '3 1 11',
+            '4 0 0'
+        ]
+        self.assertEquals(output, expected_result)
 
-  def test_get_result_empty_list(self):
-    """
-    Test if the return of a empty input its correct managed
-    """
-    test_list = []
-    result = main.get_result(test_list)
-    expected_result = {}
-    if result == expected_result:
-      print "test_get_result_empty_list - ok"  
-    else:
-      print "test_get_result_empty_list - error"
-  
-  def test_get_result_all_correct(self):
-    """
-    Test that use a input with all corrects
-    """
-    test_list = [
-      '1 2 15 C',
-      '3 1 11 C',
-      '1 1 5 C',
-      '1 3 20 C',
-      '1 4 25 C',
-    ]
-    result = main.get_result(test_list)
-    expected_result = {
-      '1': {'problems_qty': 4, 'time': 65},
-      '3': {'problems_qty': 1, 'time': 11}
-    }
-    if result == expected_result:
-      print "test_get_result_all_correct - ok"  
-    else:
-      print "test_get_result_all_correct - error"
 
-  def test_get_result_not_allowed_problem(self):
-    """
-    Test that use a input with a problem greater than 9.
-    According to exercise it should not allow problems greater than 9.
-    """
-    test_list = [
-      '1 10 15 C',
-      '3 1 11 C',
-    ]
-    result = main.get_result(test_list)
-    expected_result = {
-      '3': {'problems_qty': 1, 'time': 11}
-    }
-    if result == expected_result:
-      print "test_get_result_not_allowed_problem - ok"  
-    else:
-      print "test_get_result_not_allowed_problem - error"
-
-  def test_get_result_not_allowed_contestant(self):
-    """
-    Test that use a input with a contestant greater than 100.
-    According to exercise it should not allow contestant greater than 100.
-    """
-    test_list = [
-      '101 1 15 C',
-      '3 1 11 C',
-    ]
-    result = main.get_result(test_list)
-    expected_result = {
-      '3': {'problems_qty': 1, 'time': 11}
-    }
-    if result == expected_result:
-      print "test_get_result_not_allowed_contestant - ok"  
-    else:
-      print "test_get_result_not_allowed_contestant - error"
-
-if __name__ == "__main__":
-  test = MainTest()
-  test.execute()
+if __name__ == '__main__':
+    unittest.main()
